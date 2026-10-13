@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Мой цикл</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,500;0,700;1,500&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: одна колонка-«дневник»: сверху циферблат цикла + ввод дня, ниже карточка фазы и сетка рекомендаций */
+:root{
+  --bg:#F4F2F6; --surface:#FFFFFF; --fg:#231F29; --muted:#6B6475; --line:#E2DDE8;
+  --winter:#A3324F; --spring:#3B8A57; --summer:#B97C0C; --autumn:#B3602A; --dusk:#7B4A8E;
+  --phase:var(--winter); --phase-soft:color-mix(in srgb,var(--phase) 12%,var(--surface));
+  --display:"Alegreya",Georgia,"Times New Roman",serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16131A; --surface:#211D26; --fg:#EEEAF2; --muted:#A69FB0; --line:#352F3D;
+  --winter:#E0688A; --spring:#6BC28A; --summer:#E2B04A; --autumn:#E38D58; --dusk:#B88BD0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16131A; --surface:#211D26; --fg:#EEEAF2; --muted:#A69FB0; --line:#352F3D;
+  --winter:#E0688A; --spring:#6BC28A; --summer:#E2B04A; --autumn:#E38D58; --dusk:#B88BD0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;padding:24px 16px 48px}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
+h1{font-size:30px}
+.lab{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.top{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
+@media (max-width:620px){.top{grid-template-columns:1fr;justify-items:center;text-align:center}}
+svg.dial{width:100%;max-width:240px;height:auto}
+.dial text{fill:var(--fg)}
+.controls{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (max-width:620px){.controls{align-items:center}}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button,.btn{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;cursor:pointer}
+.stepper button{width:44px;height:44px;font-size:22px;line-height:1}
+.stepper input{width:84px;height:44px;text-align:center;font:600 22px var(--body);border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);font-variant-numeric:tabular-nums}
+.btn{padding:9px 14px;font-weight:500}
+.btn.main{background:var(--phase);border-color:var(--phase);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--phase);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+@media (max-width:620px){.row{justify-content:center}}
+select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.hint{color:var(--muted);font-size:13px}
+.phase{background:var(--phase-soft);border:1px solid color-mix(in srgb,var(--phase) 30%,transparent);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.phase h2{font-size:28px;color:var(--phase)}
+.phase .sub{font-family:var(--display);font-style:italic;font-size:18px}
+.today{background:var(--surface);border-radius:12px;padding:14px 16px;border:1px solid var(--line)}
+.today b{color:var(--phase)}
+.alert{background:var(--surface);border:1px dashed var(--phase);border-radius:12px;padding:12px 16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{font-size:19px;display:flex;align-items:center;gap:8px}
+.card h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--phase);flex:none}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.card .me{border-top:1px solid var(--line);padding-top:8px;font-size:14px}
+.card .me span{color:var(--phase);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:3px 9px;border-radius:999px;background:var(--phase-soft);border:1px solid color-mix(in srgb,var(--phase) 25%,transparent)}
+.chip.no{background:transparent;border-color:var(--line);color:var(--muted);text-decoration:line-through}
+.wide{grid-column:1/-1}
+blockquote{margin:0;font-family:var(--display);font-style:italic;font-size:20px;color:var(--phase)}
+.next{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+footer{color:var(--muted);font-size:12.5px;line-height:1.5}
+@media (prefers-reduced-motion:no-preference){#marker{transition:transform .4s ease}}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <svg class="dial" viewBox="0 0 240 240" role="img" aria-label="Циферблат цикла">
+      <g id="arcs"></g>
+      <g id="marker"><circle cx="120" cy="22" r="10" fill="var(--surface)" stroke="var(--fg)" stroke-width="3"/></g>
+      <text x="120" y="112" text-anchor="middle" style="font:600 13px var(--body);fill:var(--muted)">день</text>
+      <text id="dialDay" x="120" y="150" text-anchor="middle" style="font:700 46px var(--display)">1</text>
+      <text id="dialOf" x="120" y="174" text-anchor="middle" style="font:500 13px var(--body);fill:var(--muted)">из 28</text>
+    </svg>
+    <div class="controls">
+      <div><div class="lab">Сегодня</div><h1 id="dateTitle">Мой цикл</h1></div>
+      <div class="stepper">
+        <button id="minus" aria-label="Предыдущий день">−</button>
+        <input id="day" type="number" min="1" max="60" value="1" aria-label="День цикла">
+        <button id="plus" aria-label="Следующий день">+</button>
+      </div>
+      <div class="row">
+        <button class="btn main" id="started">Начались месячные сегодня</button>
+        <label class="hint" for="len">Длина цикла
+          <select id="len"></select>
+        </label>
+      </div>
+      <div class="hint" id="saveHint">Введи день один раз — дальше он сам прибавляется каждый день и синхронизируется между твоими устройствами в Telegram.</div>
+    </div>
+  </div>
+
+  <section class="phase" id="phaseBox"></section>
+  <div class="grid" id="grid"></div>
+  <div class="legend" id="legend"></div>
+  <footer>Рекомендации собраны из твоих четырёх гайдов по циклу. Границы фаз рассчитаны от длины цикла: овуляция ≈ за 14 дней до следующих месячных, поэтому при нерегулярном цикле они приблизительные — ориентируйся на ощущения тела. Добавки и голодание из гайдов — только после согласования с врачом; у голодания есть противопоказания (ГВ, беременность, синдром Жильбера, камни в желчном, гипотиреоз).</footer>
+</div>
+
+<script>
+const P = {
+  men:{name:"Менструальная фаза",season:"Зима · новолуние",color:"--winter",
+    sub:"Фаза ухода вглубь себя. Время отпустить то, что больше не служит.",
+    bio:"Эстроген и прогестерон на минимуме: возможны усталость, уязвимость, спазмы, вздутие, тяга к уединению. Это нормально — у тебя не FOMO, а JOMO.",
+    work:["Анализ, итоги, ретроспектива — а не запуск нового","Крупные решения по возможности отложить","Меньше встреч, больше тихой работы с фокусом"],
+    sport:["Мягкая йога, инь-йога, пилатес","Долгие прогулки, лёгкое плавание, велосипед, танцы","Без высокоинтенсивных тренировок — и без чувства вины"],
+    sportMe:"йога и прогулки по лесу вместо бега; аэройога — в мягком, восстановительном формате.",
+    eat:["супы и рагу","овощи на пару","лосось и жирная рыба","мясо травяного откорма, печень","листовая зелень","морские водоросли","тёмные ягоды","авокадо","свёкла","имбирь, куркума","ананас","тёмный шоколад (немного)","семена льна и тыквы"],
+    avoid:["кофеин","алкоголь","молочное","переработанное","паста и быстрые углеводы"],
+    eatNote:"Гайд советует мягкое кето: меньше углеводов, больше белка и полезных жиров, хорошая соль и электролиты. Чаи — ромашка, крапива.",
+    fast:"В первые дни — мягко, без перегрузки. Ближе к концу фазы можно постепенно вводить пост 13–17 часов.",
+    supp:["Магний — в менструацию до 1000 мг","Железо (бисглицинат)","Омега-3","Кальций + витамин D","B6, витамин E, цинк","Экстракт имбиря 250 мг — при болях","L-эрготионеин 5 мг"],
+    love:"Больше потребности в близости и объятиях, чем в сексе. Скажи Жене, что тебе сейчас нужно больше тишины или поддержки.",
+    care:["Ванна с английской солью","Грелка на живот","Свечи, уют — «внутренняя зима»","Длинный сон и вечерний ритуал","Лимфодренажный массаж","Касторовые компрессы — не при обильных выделениях"],
+    journal:["Что я хочу отпустить в этом цикле?","Чего я хочу в следующем цикле?","Как цикл влиял на мою энергию и работу в прошлом месяце?","Напиши короткое письмо благодарности своему телу."],
+    mantra:"Я ничего не упускаю. Сейчас моё время — для себя."},
+  fol:{name:"Фолликулярная фаза",season:"Весна · растущая луна",color:"--spring",
+    sub:"Энергия роста: ставить цели, пробовать новое, идти за мечтами.",
+    bio:"Эстроген растёт, ФСГ готовит фолликул. Больше сил, выносливости и уверенности, ум быстрее, легче общаться.",
+    work:["Запускай новые проекты и задачи","Мозговые штурмы, нестандартные решения","Планирование целей цикла, дорожная карта","Командная работа и ясная коммуникация"],
+    sport:["Наращивай интенсивность: интервалы, кардио, HIIT","Силовые с тяжёлыми весами — время для рекордов","Пробуй новые виды движения: тело легче их осваивает"],
+    sportMe:"интервальный бег в лесу, волейбол на полную, рабочие веса вверх.",
+    eat:["яйца","птица, рыба, баранина","авокадо","брокколи, кабачки, брюссельская капуста","ростки брокколи, морковь","квашеные овощи, кимчи","ягоды, цитрусы","семена тыквы, льна, кунжута","бразильский орех, кешью","петрушка, базилик, крапива","зелёный чай"],
+    avoid:["лишний сахар","готовые и переработанные продукты"],
+    eatNote:"Лёгкая свежая еда и мягкое кето. Сложные углеводы — в основном в обед, немного можно на завтрак.",
+    fast:"Подходящее время для голодания: начни с продления ночного перерыва на 1–2 часа, добавляй по 30 минут по самочувствию — вплоть до 24 часов.",
+    supp:["Омега-3","Витамины E, B6, C, магний, цинк","D3 ≈ 2000 МЕ","Коэнзим Q10 100 мг","Пиколинат цинка 15 мг — для качества овуляции","Метилфолат 400 мкг — если планируется беременность"],
+    love:"Либидо растёт, хочется игры и экспериментов. Помни: сперматозоиды живут до 5 дней, а овуляция может наступить уже на 11–12 день.",
+    care:["Свежие цветы, яркие краски — «внутренняя весна»","Больше времени на воздухе","Новая музыка, выставка, искусство","Доска визуализации или майнд-карта целей","Встречи с друзьями и новые знакомства"],
+    journal:["Чего я хочу достичь в этом цикле?","Какие три шага приблизят меня к цели?","Что новое я хочу попробовать на этой неделе?","Мои мечты даны мне не случайно — какая из них сейчас главная?"],
+    mantra:"Мои мечты даны мне не случайно. Моё предназначение — идти к ним."},
+  ovu:{name:"Овуляция",season:"Лето · полнолуние · фаза Охотницы",color:"--summer",
+    sub:"Пик энергии, уверенности и притягательности. Время выходить в мир.",
+    bio:"Эстроген и тестостерон на пике, всплеск ЛГ запускает овуляцию. Возможна тянущая боль с одной стороны, слизь как яичный белок, температура чуть выше.",
+    work:["Переговоры, презентации, демо","Сложные разговоры и 1:1 — убедительность на пике","Бери лидерство и инициативу","Нетворкинг, личный бренд, выступления"],
+    sport:["Самые интенсивные тренировки цикла","Кроссфит, круговые, HIIT, силовые","Прыжки, берпи, планка, приседания — тело быстро восстанавливается"],
+    sportMe:"волейбол и интенсив — то, что надо; можно ставить цели, которые раньше казались недостижимыми.",
+    eat:["овощи и зелень, богатые водой","огурцы, томаты, красный перец","шпинат, мангольд, брокколи","клубника, малина, арбуз, киви, персики","кокос, инжир","лосось, скумбрия, сардины","морепродукты, птица, яйца","семена кунжута и подсолнечника","кимчи, квашеная капуста","куркума, корень одуванчика"],
+    avoid:["тяжёлая жирная еда","много круп и бобовых","переработанное"],
+    eatNote:"Лёгкие и охлаждающие продукты, растительные жиры. К концу фазы — «цикл семян»: кунжут и подсолнечник (эффект через 3–4 месяца).",
+    fast:"Если практикуешь голодание — не дольше 16 часов. Телу сейчас нужна энергия.",
+    supp:["Селен (глицинат) 55 мкг","Экстракт корня крапивы 300 мг","NAC 300 мг","Эрготионеин 5 мг","Берберин 500 мг — не при камнях в желчном"],
+    love:"Пик либидо и фертильности. Если беременность пока не в планах — помни о защите; помогают тесты на овуляцию.",
+    care:["Яркая одежда и цвета — «внутреннее лето»","Мероприятия, вечеринки, новые знакомства","Творчество: танцы, музыка, рисование","Работа над образом и самопрезентацией"],
+    journal:["Какую важную тему я готова обсудить именно сейчас?","Где я хочу заявить о себе?","С кем я хочу углубить связь?","Что даёт мне ощущение силы?"],
+    mantra:"Я позволяю себе сиять."},
+  lut1:{name:"Ранняя лютеиновая фаза",season:"Осень · убывающая луна",color:"--autumn",
+    sub:"Фаза принятия, первая половина: собранность и доведение до конца.",
+    bio:"Прогестерон растёт и готовит эндометрий. Концентрация и стабильная энергия, но к концу фазы сил постепенно меньше.",
+    work:["Детальная, кропотливая работа","Доделывай начатое, закрывай хвосты","Вычёркивай больше пунктов из списка","Тексты, документы, анализ данных"],
+    sport:["Последний рывок силовых в этом цикле","Вес чуть ниже, повторений больше","HIIT → MIIT (средняя интенсивность)","Ровное кардио, пилатес, растяжка, ролл"],
+    sportMe:"бег в лесу ровным темпом без рывков; волейбол — по самочувствию.",
+    eat:["цельные злаки, рис","тыква, батат, кабачок, морковь","корнеплоды, бобовые","банан, псиллиум","капуста, цветная капуста, шпинат","индейка, треска, палтус, дикая сёмга","говядина, баранина","семена подсолнечника и кунжута","имбирь, ромашка, мята","тёмный шоколад"],
+    avoid:["газировка","печенье и пирожные","рафинированная паста и мука"],
+    eatNote:"Время сложных углеводов и клетчатки — они поддерживают прогестерон и выравнивают настроение. Не ограничивай себя жёстко.",
+    fast:"Без жёсткого голодания: ужин в 18–19, завтрак в течение часа после подъёма, перерыв не больше 14 часов.",
+    supp:["Магний (глицинат) от 300 мг","Витамин B6 50 мг","Эрготионеин 5 мг"],
+    love:"Желание может меняться. В начале фазы особенно ценно качественное время вдвоём и тёплый контакт.",
+    care:["Тёплые тона, мягкий свет — «внутренняя осень»","Творчество: письмо, рисование, музыка","Сытные согревающие блюда"],
+    journal:["Что мне нужно завершить до конца цикла?","Какие задачи требуют моего внимания к деталям?","Что я чувствую и как могу выразить это творчески?"],
+    mantra:"Я довожу до конца то, что начала."},
+  lut2:{name:"Поздняя лютеиновая фаза",season:"Поздняя осень · последняя четверть",color:"--dusk",
+    sub:"Фаза принятия, вторая половина: замедлиться и подготовиться.",
+    bio:"Гормоны снижаются — возможны ПМС, перепады настроения, чувствительность груди, вздутие, тяга к сладкому. Отдых — это не слабость.",
+    work:["Оценка проектов: что получилось, что скорректировать","Планирование следующего цикла","Минимум стресса, без важных решений","Мягкие границы: можно отказаться от лишних встреч"],
+    sport:["Инь-йога, спокойная йога, медитация","Прогулки на природе","Растяжка, мобилизация, ролл","Если устала — не заставляй себя"],
+    sportMe:"прогулка по лесу вместо пробежки; йога в спокойном темпе.",
+    eat:["согревающие супы","тушёные и запечённые овощи","тыква, батат, корнеплоды","рис","индейка, рыба","листовая зелень, орехи","семена подсолнечника и кунжута","ромашковый и мятный чай","тёмный шоколад"],
+    avoid:["кофеин","сахар","рафинированные углеводы","жёсткие ограничения"],
+    eatNote:"При тяге к сладкому — эритрит, аллюлоза, архат, стевия, сироп цикория или кусочек тёмного шоколада.",
+    fast:"Перерыв не больше 14 часов: ужин в 18–19, завтрак в течение часа после подъёма.",
+    supp:["Магний (глицинат) от 300 мг — тревожность, сон","B6 50 мг — вздутие, грудь, настроение","Витекс 200 мг","Шафран 88 мг — настроение","Родиола 200 мг — при усталости"],
+    love:"Больше потребности в тепле и поддержке, чем в сексе. Скажи об этом прямо — партнёру важно понимать.",
+    care:["Тёплые ванны, грелка","Массаж, уход за кожей, любимая книга","Заранее подготовь средства к месячным","Поддерживающий круг близких","Дневник"],
+    journal:["Что получилось в этом цикле?","Что я хочу скорректировать в следующем?","Где мне нужны мягкие границы?","Что меня сейчас наполняет?"],
+    mantra:"Отдых — это не слабость, а умение принимать — не повод для стыда."}
+};
+
+function ranges(L){
+  const ov=L-14;
+  return [["men",1,5],["fol",6,ov-3],["ovu",ov-2,ov+1],["lut1",ov+2,L-7],["lut2",L-6,L]];
+}
+function phaseOf(d,L){
+  for(const [k,a,b] of ranges(L)) if(d>=a&&d<=b) return {k,a,b};
+  return {k:"lut2",a:L-6,b:L,late:true};
+}
+function todayFocus(k,d,a,b,L){
+  const pos=d-a, len=b-a+1, rest=b-d;
+  const T={
+    men:[[0,1,"Гормоны на самом дне. Максимум отдыха: грелка, тёплое питьё, никаких подвигов. Пост сегодня не нужен."],
+         [2,3,"Мягкое движение и итоги прошлого цикла. Хороший день для дневника и ретро."],
+         [4,9,"Энергия возвращается. Можно попробовать пост 13–17 часов и начать думать о целях нового цикла."]],
+    fol:[[0,1,"Начало весны: запиши цели цикла и составь план."],
+         [2,99,"Сил всё больше — время для интенсивных тренировок и запуска нового."]],
+    ovu:[[0,1,"Входишь в пик: назначай важные встречи, переговоры и сложные разговоры на эти дни."],
+         [2,99,"Последние дни пика. Добавь в еду кунжут и подсолнечник — начало «цикла семян»."]],
+    lut1:[[0,2,"Собранность на максимуме. Возьмись за самую кропотливую задачу недели."],
+          [3,99,"Последний рывок силовых в этом цикле. Закрывай хвосты, пока энергия ровная."]],
+    lut2:[[0,2,"Начинай замедляться: убери из календаря лишнее, ограничь кофеин и сладкое."],
+          [3,99,"Месячные близко. Подготовь средства, тёплое пространство и не принимай важных решений."]]
+  };
+  for(const [x,y,t] of T[k]) if(pos>=x&&pos<=y) return t;
+  return T[k][T[k].length-1][2];
+}
+
+const $=s=>document.querySelector(s);
+const lenSel=$("#len");
+for(let i=24;i<=40;i++){const o=document.createElement("option");o.value=i;o.textContent=i+" дн.";lenSel.appendChild(o);}
+
+const tg=(window.Telegram&&window.Telegram.WebApp)||null;
+const cloud=tg&&tg.isVersionAtLeast&&tg.isVersionAtLeast("6.9")?tg.CloudStorage:null;
+const local={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const store={set(k,v){v=String(v);local.set(k,v);if(cloud){try{cloud.setItem(k,v,()=>{})}catch(e){}}}};
+function midnight(d){const x=new Date(d);x.setHours(0,0,0,0);return x;}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function loadAll(cb){
+  const fromLocal=()=>({cycleStart:local.get("cycleStart"),cycleLen:local.get("cycleLen")});
+  if(!cloud) return cb(fromLocal());
+  let done=false;
+  const t=setTimeout(()=>{if(!done){done=true;cb(fromLocal());}},2000);
+  try{cloud.getItems(["cycleStart","cycleLen"],(err,v)=>{
+    if(done)return; done=true; clearTimeout(t);
+    if(err||!v) return cb(fromLocal());
+    cb({cycleStart:v.cycleStart||local.get("cycleStart"),cycleLen:v.cycleLen||local.get("cycleLen")});
+  });}catch(e){done=true;clearTimeout(t);cb(fromLocal());}
+}
+function applyTheme(){
+  if(!tg||!tg.colorScheme) return;
+  document.documentElement.setAttribute("data-theme",tg.colorScheme);
+  const bg=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  try{tg.setHeaderColor(bg);tg.setBackgroundColor(bg);}catch(e){}
+}
+function haptic(){try{tg&&tg.HapticFeedback&&tg.HapticFeedback.selectionChanged();}catch(e){}}
+
+let L=28, day=1;
+lenSel.value=L;
+
+function setDay(d,save=true){
+  haptic();
+  day=Math.max(1,Math.min(60,d|0||1));
+  if(save){const s=midnight(new Date());s.setDate(s.getDate()-(day-1));store.set("cycleStart",iso(s));}
+  render();
+}
+$("#minus").onclick=()=>setDay(day-1);
+$("#plus").onclick=()=>setDay(day+1);
+$("#day").addEventListener("change",e=>setDay(parseInt(e.target.value)));
+$("#started").onclick=()=>setDay(1);
+lenSel.onchange=()=>{haptic();L=parseInt(lenSel.value);store.set("cycleLen",L);render();};
+
+function arcPath(a0,a1,r){
+  const p=a=>[120+r*Math.sin(a),120-r*Math.cos(a)];
+  const [x0,y0]=p(a0),[x1,y1]=p(a1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function list(a){return "<ul>"+a.map(x=>"<li>"+x+"</li>").join("")+"</ul>";}
+
+function render(){
+  const total=Math.max(L,day);
+  const ph=phaseOf(day,L), p=P[ph.k];
+  document.documentElement.style.setProperty("--phase",`var(${p.color})`);
+  $("#day").value=day;
+  $("#dialDay").textContent=day;
+  $("#dialOf").textContent="из "+L;
+  const now=new Date();
+  $("#dateTitle").textContent=now.toLocaleDateString("ru-RU",{day:"numeric",month:"long",weekday:"long"});
+
+  // dial
+  const g=$("#arcs"); g.innerHTML="";
+  const gap=0.04;
+  g.insertAdjacentHTML("beforeend",`<circle cx="120" cy="120" r="98" fill="none" stroke="var(--line)" stroke-width="14"/>`);
+  for(const [k,a,b] of ranges(L)){
+    const a0=(a-1)/L*2*Math.PI+gap/2, a1=b/L*2*Math.PI-gap/2;
+    const on=k===ph.k;
+    g.insertAdjacentHTML("beforeend",`<path d="${arcPath(a0,a1,98)}" fill="none" stroke="var(${P[k].color})" stroke-width="${on?18:14}" stroke-linecap="round" opacity="${on?1:.45}"/>`);
+  }
+  const ang=((Math.min(day,L)-0.5)/L)*360;
+  $("#marker").style.transform=`rotate(${ang}deg)`;
+  $("#marker").style.transformOrigin="120px 120px";
+  $("#marker circle").setAttribute("cy","22");
+
+  // phase box
+  let late="";
+  if(day>L){
+    late=`<div class="alert"><b>День ${day} — цикл длиннее выбранных ${L} дней.</b> Если месячные начались, нажми «Начались месячные сегодня». Если цикл часто длиннее — поменяй длину цикла. При задержке больше недели стоит сделать тест или показаться врачу.</div>`;
+  }
+  const rng=ph.late?`${ph.a}+ день`:`дни ${ph.a}–${ph.b}`;
+  const nextK={men:"fol",fol:"ovu",ovu:"lut1",lut1:"lut2",lut2:"men"}[ph.k];
+  const left=ph.late?0:ph.b-day+1;
+  const nextTxt=nextK==="men"?"новый цикл":P[nextK].name.toLowerCase();
+  $("#phaseBox").innerHTML=`
+    <div class="lab">${p.season} · ${rng}</div>
+    <h2>${p.name}</h2>
+    <div class="sub">${p.sub}</div>
+    <div>${p.bio}</div>
+    <div class="today"><b>Фокус дня ${day}.</b> ${todayFocus(ph.k,day,ph.a,ph.b,L)}</div>
+    ${late}
+    <div class="hint">${ph.late?"":(left===1?"Завтра":"Через "+left+" "+plural(left,["день","дня","дней"]))} — ${nextTxt}.</div>`;
+
+  $("#grid").innerHTML=`
+    <div class="card"><h3>Работа</h3>${list(p.work)}</div>
+    <div class="card"><h3>Тренировки</h3>${list(p.sport)}<div class="me"><span>Для тебя:</span> ${p.sportMe}</div></div>
+    <div class="card wide"><h3>Питание</h3>
+      <div class="chips">${p.eat.map(x=>`<span class="chip">${x}</span>`).join("")}</div>
+      <div class="chips">${p.avoid.map(x=>`<span class="chip no">${x}</span>`).join("")}</div>
+      <div class="hint">${p.eatNote}</div></div>
+    <div class="card"><h3>Голодание</h3><div>${p.fast}</div></div>
+    <div class="card"><h3>Добавки из гайда</h3>${list(p.supp)}<div class="hint">Перед приёмом — согласуй с врачом.</div></div>
+    <div class="card"><h3>Забота о себе</h3>${list(p.care)}</div>
+    <div class="card"><h3>Отношения и близость</h3><div>${p.love}</div></div>
+    <div class="card wide"><h3>Вопрос для дневника</h3><div style="font-size:16px">${p.journal[(day-1)%p.journal.length]}</div><blockquote>«${p.mantra}»</blockquote></div>`;
+
+  $("#legend").innerHTML=ranges(L).map(([k,a,b])=>`<span><i style="background:var(${P[k].color})"></i>${P[k].name} · ${a}–${b}</span>`).join("");
+}
+function plural(n,f){const a=n%100,b=n%10;if(a>10&&a<20)return f[2];if(b>1&&b<5)return f[1];if(b===1)return f[0];return f[2];}
+render();
+if(tg){tg.ready();tg.expand();applyTheme();tg.onEvent("themeChanged",()=>{applyTheme();render();});}
+loadAll(v=>{
+  L=parseInt(v.cycleLen)||28; lenSel.value=L;
+  if(v.cycleStart){const st=midnight(new Date(v.cycleStart+"T00:00:00"));day=Math.max(1,Math.round((midnight(new Date())-st)/864e5)+1);}
+  render();
+});
+</script>
+</body>
+</html>
