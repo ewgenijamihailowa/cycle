@@ -2242,10 +2242,9 @@
 })();
 </script>
 <title>Мой цикл</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,500;0,700;1,500&family=Golos+Text:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
 <style>
-/* Layout: одна колонка-«дневник»: сверху циферблат цикла + ввод дня, ниже карточка фазы и сетка рекомендаций */
+/* Layout: лента-дневник: циферблат + ввод дня → 2 недели вперёд → фаза → мой день (чек-лист, кофе/сладкое) → меню → рекомендации */
 :root{
   --bg:#F4F2F6; --surface:#FFFFFF; --fg:#231F29; --muted:#6B6475; --line:#E2DDE8;
   --winter:#A3324F; --spring:#3B8A57; --summer:#B97C0C; --autumn:#B3602A; --dusk:#7B4A8E;
@@ -2260,39 +2259,88 @@
   --bg:#16131A; --surface:#211D26; --fg:#EEEAF2; --muted:#A69FB0; --line:#352F3D;
   --winter:#E0688A; --spring:#6BC28A; --summer:#E2B04A; --autumn:#E38D58; --dusk:#B88BD0; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;padding:24px 16px 48px}
-.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;padding:20px 16px 48px;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance}
-h1{font-size:30px}
+h1{font-size:28px}
 .lab{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.top{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
+.top{display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:center}
 @media (max-width:620px){.top{grid-template-columns:1fr;justify-items:center;text-align:center}}
-svg.dial{width:100%;max-width:240px;height:auto}
+svg.dial{width:100%;max-width:220px;height:auto}
 .dial text{fill:var(--fg)}
-.controls{display:flex;flex-direction:column;gap:14px;min-width:0}
+.controls{display:flex;flex-direction:column;gap:12px;min-width:0}
 @media (max-width:620px){.controls{align-items:center}}
 .stepper{display:flex;align-items:center;gap:10px}
-.stepper button,.btn{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;cursor:pointer}
+button{font:inherit;color:var(--fg);cursor:pointer}
+.stepper button,.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px}
 .stepper button{width:44px;height:44px;font-size:22px;line-height:1}
 .stepper input{width:84px;height:44px;text-align:center;font:600 22px var(--body);border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);font-variant-numeric:tabular-nums}
 .btn{padding:9px 14px;font-weight:500}
 .btn.main{background:var(--phase);border-color:var(--phase);color:#fff}
+.btn.small{padding:5px 10px;font-size:13px}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--phase);outline-offset:2px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-@media (max-width:620px){.row{justify-content:center}}
+@media (max-width:620px){.controls .row{justify-content:center}}
 select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
 .hint{color:var(--muted);font-size:13px}
-.phase{background:var(--phase-soft);border:1px solid color-mix(in srgb,var(--phase) 30%,transparent);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px}
-.phase h2{font-size:28px;color:var(--phase)}
-.phase .sub{font-family:var(--display);font-style:italic;font-size:18px}
-.today{background:var(--surface);border-radius:12px;padding:14px 16px;border:1px solid var(--line)}
-.today b{color:var(--phase)}
-.alert{background:var(--surface);border:1px dashed var(--phase);border-radius:12px;padding:12px 16px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-@media (max-width:620px){.grid{grid-template-columns:1fr}}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card h3{font-size:19px;display:flex;align-items:center;gap:8px}
 .card h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--phase);flex:none}
+.card h3 .r{margin-left:auto;font:500 13px var(--body);color:var(--muted)}
+/* 2 weeks */
+.strip{display:grid;grid-template-columns:repeat(14,minmax(44px,1fr));gap:4px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.strip button{border:1px solid transparent;background:transparent;border-radius:10px;padding:6px 0 5px;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:44px}
+.strip button[aria-pressed="true"]{border-color:var(--fg);background:var(--bg)}
+.strip .wd{font-size:11px;color:var(--muted);text-transform:uppercase}
+.strip .dt{font-weight:600;font-variant-numeric:tabular-nums}
+.strip .bar{width:80%;height:6px;border-radius:3px}
+.strip .cd{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.strip .tag{font-size:10px;line-height:1;height:10px;color:var(--fg);font-weight:600}
+.keys{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.keys li{display:flex;gap:10px;align-items:baseline}
+.keys i{width:10px;height:10px;border-radius:3px;flex:none;transform:translateY(1px)}
+.keys b{font-variant-numeric:tabular-nums;min-width:118px}
+.viewing{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px dashed var(--phase);border-radius:12px;padding:10px 14px}
+/* phase */
+.phase{background:var(--phase-soft);border:1px solid color-mix(in srgb,var(--phase) 30%,transparent);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.phase h2{font-size:27px;color:var(--phase)}
+.phase .sub{font-family:var(--display);font-style:italic;font-size:18px}
+.today{background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid var(--line)}
+.today b{color:var(--phase)}
+.alert{background:var(--surface);border:1px dashed var(--phase);border-radius:12px;padding:12px 14px}
+/* my day */
+.checks{display:flex;flex-direction:column;gap:2px}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:8px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.chk:last-child{border-bottom:0}
+.chk input{appearance:none;width:22px;height:22px;border:2px solid var(--line);border-radius:7px;flex:none;margin:0;display:grid;place-items:center;background:var(--surface);cursor:pointer}
+.chk input:checked{background:var(--phase);border-color:var(--phase)}
+.chk input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.chk input:checked + span{color:var(--muted);text-decoration:line-through}
+.progress{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.progress div{height:100%;background:var(--phase);transition:width .3s}
+.habits{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.habit{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.habit .q{font-weight:600}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 4px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.big{font-family:var(--display);font-size:26px;font-weight:700;color:var(--phase);line-height:1.1;font-variant-numeric:tabular-nums}
+.hist{display:grid;grid-template-columns:auto repeat(14,minmax(0,1fr));gap:4px 3px;align-items:center;font-size:11px;color:var(--muted)}
+.hist .ph{height:4px;border-radius:2px}
+.hist .dot{width:12px;height:12px;border-radius:50%;justify-self:center;border:1.5px solid var(--line)}
+.hist .dot.on{background:var(--fg);border-color:var(--fg)}
+.hist .dot.sw.on{background:var(--phase);border-color:var(--phase)}
+.hist .d{text-align:center;font-variant-numeric:tabular-nums}
+@media (max-width:420px){.habits{grid-template-columns:1fr}}
+/* menu */
+.meals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.meals{grid-template-columns:1fr 1fr}}
+.meal{border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.meal .lab{margin-bottom:4px}
+/* recs */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
 .card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .card .me{border-top:1px solid var(--line);padding-top:8px;font-size:14px}
 .card .me span{color:var(--phase);font-weight:600}
@@ -2301,16 +2349,11 @@ select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--lin
 .chip.no{background:transparent;border-color:var(--line);color:var(--muted);text-decoration:line-through}
 .wide{grid-column:1/-1}
 blockquote{margin:0;font-family:var(--display);font-style:italic;font-size:20px;color:var(--phase)}
-.next{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 footer{color:var(--muted);font-size:12.5px;line-height:1.5}
 @media (prefers-reduced-motion:no-preference){#marker{transition:transform .4s ease}}
-body{margin:0;-webkit-tap-highlight-color:transparent}
 </style>
 </head>
 <body>
-
 <div class="wrap">
   <div class="top">
     <svg class="dial" viewBox="0 0 240 240" role="img" aria-label="Циферблат цикла">
@@ -2324,23 +2367,55 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       <div><div class="lab">Сегодня</div><h1 id="dateTitle">Мой цикл</h1></div>
       <div class="stepper">
         <button id="minus" aria-label="Предыдущий день">−</button>
-        <input id="day" type="number" min="1" max="60" value="1" aria-label="День цикла">
+        <input id="day" type="number" min="1" max="60" value="1" aria-label="День цикла сегодня">
         <button id="plus" aria-label="Следующий день">+</button>
       </div>
       <div class="row">
         <button class="btn main" id="started">Начались месячные сегодня</button>
-        <label class="hint" for="len">Длина цикла
-          <select id="len"></select>
-        </label>
+        <label class="hint" for="len">Длина цикла <select id="len"></select></label>
       </div>
-      <div class="hint" id="saveHint">Введи день один раз — дальше он сам прибавляется каждый день и синхронизируется между твоими устройствами в Telegram.</div>
     </div>
   </div>
 
+  <section class="card" aria-label="Две недели вперёд">
+    <h3>Две недели вперёд <span class="r">нажми на день</span></h3>
+    <div class="strip" id="strip"></div>
+    <ul class="keys" id="keys"></ul>
+  </section>
+
+  <div class="viewing" id="viewing" hidden></div>
   <section class="phase" id="phaseBox"></section>
+
+  <section class="card" id="myDay">
+    <h3>Мой день <span class="r" id="chkCount"></span></h3>
+    <div class="progress"><div id="prog" style="width:0"></div></div>
+    <div class="checks" id="checks"></div>
+    <div class="habits">
+      <div class="habit">
+        <div class="q">Кофе сегодня</div>
+        <div class="seg" data-k="c"><button data-v="0">Не пила</button><button data-v="1">Пила</button></div>
+        <div><div class="big" id="coffeeBig">—</div><div class="hint" id="coffeeTxt"></div></div>
+      </div>
+      <div class="habit">
+        <div class="q">Сладкое сегодня</div>
+        <div class="seg" data-k="s"><button data-v="0">Не было</button><button data-v="1">Было</button></div>
+        <div><div class="big" id="sweetBig">—</div><div class="hint" id="sweetTxt"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="lab" style="margin-bottom:6px">Последние 14 дней</div>
+      <div class="hist" id="hist"></div>
+    </div>
+  </section>
+
+  <section class="card" id="menu">
+    <h3>Меню дня <span class="r"><button class="btn small" id="shuffle">Другие варианты</button></span></h3>
+    <div class="meals" id="meals"></div>
+    <div class="hint" id="menuNote"></div>
+  </section>
+
   <div class="grid" id="grid"></div>
-  <div class="legend" id="legend"></div>
-  <footer>Рекомендации собраны из твоих четырёх гайдов по циклу. Границы фаз рассчитаны от длины цикла: овуляция ≈ за 14 дней до следующих месячных, поэтому при нерегулярном цикле они приблизительные — ориентируйся на ощущения тела. Добавки и голодание из гайдов — только после согласования с врачом; у голодания есть противопоказания (ГВ, беременность, синдром Жильбера, камни в желчном, гипотиреоз).</footer>
+  <footer>Рекомендации и меню собраны из твоих гайдов по циклу. Фазы рассчитаны от длины цикла (овуляция ≈ за 14 дней до месячных) — при нерегулярном цикле они приблизительные. Добавки и голодание — только после согласования с врачом; у голодания есть противопоказания (ГВ, беременность, синдром Жильбера, камни в желчном, гипотиреоз). Отметки хранятся в твоём аккаунте Telegram.</footer>
 </div>
 
 <script>
@@ -2422,148 +2497,272 @@ const P = {
     mantra:"Отдых — это не слабость, а умение принимать — не повод для стыда."}
 };
 
-function ranges(L){
-  const ov=L-14;
-  return [["men",1,5],["fol",6,ov-3],["ovu",ov-2,ov+1],["lut1",ov+2,L-7],["lut2",L-6,L]];
-}
-function phaseOf(d,L){
-  for(const [k,a,b] of ranges(L)) if(d>=a&&d<=b) return {k,a,b};
-  return {k:"lut2",a:L-6,b:L,late:true};
-}
-function todayFocus(k,d,a,b,L){
-  const pos=d-a, len=b-a+1, rest=b-d;
+
+const MENU={
+  men:{b:["Омлет со шпинатом и авокадо","Тёплый бульон и яйца пашот с зеленью","Чиа-пудинг на кокосовом молоке с тёмными ягодами и льном"],
+       l:["Суп с говядиной, овощами и имбирём","Печень, тушённая с луком, и листовой салат","Рагу из индейки с кабачком и куркумой"],
+       d:["Лосось на пару с брокколи и сливочным маслом","Тёплый салат: шпинат, свёкла, яйцо, тыквенные семечки","Суп с водорослями и рыбой"],
+       s:["2–3 квадратика тёмного шоколада","Ананас","Горсть тыквенных семечек","Чай с имбирём или ромашкой"],
+       note:"Мягкое кето: меньше углеводов, больше белка и полезных жиров, тёплая еда. Без кофеина, алкоголя и молочного."},
+  fol:{b:["Яйца, авокадо и квашеная капуста","Омлет с зеленью и ростками брокколи","Смузи с ягодами, льном и ореховой пастой"],
+       l:["Курица с гречкой и салатом из брокколи и моркови","Боул: рыба, рис, кимчи, авокадо","Баранина с запечёнными морковью и кабачком"],
+       d:["Рыба с салатом из цитрусов, рукколы и кунжута","Курица с брюссельской капустой и оливками","Кабачковые оладьи с яйцом и квашеными овощами"],
+       s:["Ягоды","1–2 бразильских ореха и кешью","Грейпфрут или апельсин","Зелёный чай или чай с крапивой"],
+       note:"Лёгкая свежая еда, больше белка. Сложные углеводы — в обед, немного можно на завтрак."},
+  ovu:{b:["Смузи: шпинат, клубника, кокосовое молоко, чиа","Яйца с томатами, красным перцем и зеленью","Йогурт из козьего молока с малиной и миндалём"],
+       l:["Салат с лососем, огурцом, шпинатом и тыквенными семечками","Скумбрия или сардины с овощным салатом","Курица с запечёнными баклажанами и томатами"],
+       d:["Морепродукты с овощами на гриле","Холодный овощной суп и яйцо","Индейка с салатом из капусты и свёклы, кунжут"],
+       s:["Арбуз или персик","Инжир и киви","Фисташки","Тёмный шоколад"],
+       note:"Лёгкие охлаждающие продукты и растительные жиры. Поменьше круп, бобовых и тяжёлой жирной еды."},
+  lut1:{b:["Овсянка с бананом, кунжутом и семечками подсолнечника","Запечённый батат с яйцами и шпинатом","Рисовая каша с тыквой"],
+       l:["Индейка с рисом и запечённой тыквой","Говядина с бататом и цветной капустой","Треска с рисом и тушёной капустой"],
+       d:["Палтус с пюре из батата","Дикая сёмга с запечёнными корнеплодами","Индейка с тушёными кабачком и морковью"],
+       s:["Банан и горсть семечек подсолнечника","Тёмный шоколад","Морковь и сельдерей","Чай с мятой"],
+       note:"Время сложных углеводов и клетчатки. Ужин в 18–19, перерыв до завтрака не больше 14 часов."},
+  lut2:{b:["Тёплая рисовая каша с тыквой и корицей","Запечённый батат с яйцом","Омлет с капустой и луком"],
+       l:["Тыквенный суп с имбирём и индейкой","Рагу из говядины с корнеплодами","Рис с тушёными овощами и треской"],
+       d:["Крем-суп из цветной капусты и рыба","Индейка, тушённая с репой и морковью","Лосось с бататом и шпинатом"],
+       s:["Тёмный шоколад","Десерт на эритрите или стевии","Банан","Ромашковый чай"],
+       note:"Тёплое и успокаивающее. Без кофеина и сахара, но и без жёстких ограничений. Ужин в 18–19."}
+};
+const CHECK={
+  men:["Мягкое движение: йога, инь-йога или прогулка","Тёплая ванна или грелка","Без кофеина","Ранний сон","Запись в дневник"],
+  fol:["Тренировка с нагрузкой: интервалы, силовая или волейбол","Шаг к цели цикла","Квашеные овощи или кимчи","Время на свежем воздухе","Что-то новое: идея, место, знакомство"],
+  ovu:["Интенсивная тренировка","Важный разговор: переговоры, 1:1 или звонок","Свежий салат или смузи","Пост не дольше 16 часов","Творчество или общение"],
+  lut1:["Силовая с меньшим весом или ровный бег","Довести до конца одну кропотливую задачу","Сложные углеводы в обед","Ужин до 19:00","Творческое выражение эмоций"],
+  lut2:["Инь-йога, растяжка или прогулка","Убрать лишнее из календаря","Без кофеина и сахара","Ужин до 19:00","Ритуал заботы: ванна, массаж или книга"]
+};
+const NEXT={men:"fol",fol:"ovu",ovu:"lut1",lut1:"lut2",lut2:"men"};
+
+function ranges(L){const ov=L-14;return [["men",1,5],["fol",6,ov-3],["ovu",ov-2,ov+1],["lut1",ov+2,L-7],["lut2",L-6,L]];}
+function phaseOf(d,L){for(const [k,a,b] of ranges(L)) if(d>=a&&d<=b) return {k,a,b};return {k:"lut2",a:L-6,b:L,late:true};}
+function todayFocus(k,d,a){
+  const pos=d-a;
   const T={
-    men:[[0,1,"Гормоны на самом дне. Максимум отдыха: грелка, тёплое питьё, никаких подвигов. Пост сегодня не нужен."],
-         [2,3,"Мягкое движение и итоги прошлого цикла. Хороший день для дневника и ретро."],
-         [4,9,"Энергия возвращается. Можно попробовать пост 13–17 часов и начать думать о целях нового цикла."]],
-    fol:[[0,1,"Начало весны: запиши цели цикла и составь план."],
-         [2,99,"Сил всё больше — время для интенсивных тренировок и запуска нового."]],
-    ovu:[[0,1,"Входишь в пик: назначай важные встречи, переговоры и сложные разговоры на эти дни."],
-         [2,99,"Последние дни пика. Добавь в еду кунжут и подсолнечник — начало «цикла семян»."]],
-    lut1:[[0,2,"Собранность на максимуме. Возьмись за самую кропотливую задачу недели."],
-          [3,99,"Последний рывок силовых в этом цикле. Закрывай хвосты, пока энергия ровная."]],
-    lut2:[[0,2,"Начинай замедляться: убери из календаря лишнее, ограничь кофеин и сладкое."],
-          [3,99,"Месячные близко. Подготовь средства, тёплое пространство и не принимай важных решений."]]
+    men:[[0,1,"Гормоны на самом дне. Максимум отдыха: грелка, тёплое питьё, никаких подвигов. Пост сегодня не нужен."],[2,3,"Мягкое движение и итоги прошлого цикла. Хороший день для дневника и ретро."],[4,99,"Энергия возвращается. Можно попробовать пост 13–17 часов и подумать о целях нового цикла."]],
+    fol:[[0,1,"Начало весны: запиши цели цикла и составь план."],[2,99,"Сил всё больше — время для интенсивных тренировок и запуска нового."]],
+    ovu:[[0,1,"Входишь в пик: назначай важные встречи, переговоры и сложные разговоры на эти дни."],[2,99,"Последние дни пика. Переходи на кунжут и подсолнечник — вторая половина «цикла семян»."]],
+    lut1:[[0,2,"Собранность на максимуме. Возьмись за самую кропотливую задачу недели."],[3,99,"Последний рывок силовых в этом цикле. Закрывай хвосты, пока энергия ровная."]],
+    lut2:[[0,2,"Начинай замедляться: убери из календаря лишнее, ограничь кофеин и сладкое."],[3,99,"Месячные близко. Подготовь средства, тёплое пространство и не принимай важных решений."]]
   };
   for(const [x,y,t] of T[k]) if(pos>=x&&pos<=y) return t;
-  return T[k][T[k].length-1][2];
+}
+function seedsFor(k,d,a){
+  if(k==="men"||k==="fol"||(k==="ovu"&&d-a<2)) return "Семена: 1 ст. л. молотого льна + 1 ст. л. тыквенных";
+  return "Семена: 1 ст. л. кунжута + 1 ст. л. подсолнечника";
+}
+function checklist(k,d,a){
+  const sup={men:"Магний",fol:"Омега-3",ovu:"Селен",lut1:"Магний + B6",lut2:"Магний + B6"}[k];
+  return ["Вода 1,5–2 литра",seedsFor(k,d,a),...CHECK[k],sup+" (если согласовано с врачом)"];
 }
 
-const $=s=>document.querySelector(s);
-const lenSel=$("#len");
-for(let i=24;i<=40;i++){const o=document.createElement("option");o.value=i;o.textContent=i+" дн.";lenSel.appendChild(o);}
-
+/* ---------- storage ---------- */
 const tg=(window.Telegram&&window.Telegram.WebApp)||null;
 const cloud=tg&&tg.isVersionAtLeast&&tg.isVersionAtLeast("6.9")?tg.CloudStorage:null;
 const local={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const store={set(k,v){v=String(v);local.set(k,v);if(cloud){try{cloud.setItem(k,v,()=>{})}catch(e){}}}};
+function save(k,v){v=String(v);local.set(k,v);if(cloud){try{cloud.setItem(k,v,()=>{})}catch(e){}}}
+function loadKeys(keys,cb){
+  const fromLocal=()=>{const o={};keys.forEach(k=>o[k]=local.get(k));return o;};
+  if(!cloud) return cb(fromLocal());
+  let done=false;const t=setTimeout(()=>{if(!done){done=true;cb(fromLocal());}},2500);
+  try{cloud.getItems(keys,(err,v)=>{if(done)return;done=true;clearTimeout(t);
+    if(err||!v) return cb(fromLocal());
+    const o={};keys.forEach(k=>o[k]=(v[k]!==undefined&&v[k]!=="")?v[k]:local.get(k));cb(o);});}
+  catch(e){done=true;clearTimeout(t);cb(fromLocal());}
+}
+
+/* ---------- dates ---------- */
+const DAY=864e5;
 function midnight(d){const x=new Date(d);x.setHours(0,0,0,0);return x;}
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function loadAll(cb){
-  const fromLocal=()=>({cycleStart:local.get("cycleStart"),cycleLen:local.get("cycleLen")});
-  if(!cloud) return cb(fromLocal());
-  let done=false;
-  const t=setTimeout(()=>{if(!done){done=true;cb(fromLocal());}},2000);
-  try{cloud.getItems(["cycleStart","cycleLen"],(err,v)=>{
-    if(done)return; done=true; clearTimeout(t);
-    if(err||!v) return cb(fromLocal());
-    cb({cycleStart:v.cycleStart||local.get("cycleStart"),cycleLen:v.cycleLen||local.get("cycleLen")});
-  });}catch(e){done=true;clearTimeout(t);cb(fromLocal());}
+function parse(s){return midnight(new Date(s+"T00:00:00"));}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return midnight(x);}
+function diff(a,b){return Math.round((midnight(a)-midnight(b))/DAY);}
+function fmt(d,o){return d.toLocaleDateString("ru-RU",o||{day:"numeric",month:"short"}).replace(".","");}
+function plural(n,f){const a=n%100,b=n%10;if(a>10&&a<20)return f[2];if(b>1&&b<5)return f[1];if(b===1)return f[0];return f[2];}
+
+/* ---------- state ---------- */
+const TODAY=midnight(new Date());
+let L=28, start=TODAY, sel=0, shuffle=0, trackSince=TODAY, lastCoffee=null;
+const logs={};
+function monthKey(d){return "log_"+iso(d).slice(0,7);}
+function entry(d){const m=logs[monthKey(d)]||{};return m[String(d.getDate())]||{};}
+function setEntry(d,patch){
+  const mk=monthKey(d);logs[mk]=logs[mk]||{};const k=String(d.getDate());
+  logs[mk][k]=Object.assign({},logs[mk][k]||{},patch);save(mk,JSON.stringify(logs[mk]));
 }
+function todayCD(){return diff(TODAY,start)+1;}
+function cdAt(offset){
+  const t=todayCD(), raw=t+offset;
+  if(t<=L||raw<=0) return ((raw-1)%L+L)%L+1;
+  return raw;
+}
+
+/* ---------- controls ---------- */
+const $=s=>document.querySelector(s);
+const lenSel=$("#len");
+for(let i=24;i<=40;i++){const o=document.createElement("option");o.value=i;o.textContent=i+" дн.";lenSel.appendChild(o);}
+function haptic(t){try{tg&&tg.HapticFeedback&&(t?tg.HapticFeedback.impactOccurred(t):tg.HapticFeedback.selectionChanged());}catch(e){}}
+function setToday(d){d=Math.max(1,Math.min(60,d|0||1));start=addDays(TODAY,-(d-1));save("cycleStart",iso(start));sel=0;haptic();render();}
+$("#minus").onclick=()=>setToday(todayCD()-1);
+$("#plus").onclick=()=>setToday(todayCD()+1);
+$("#day").addEventListener("change",e=>setToday(parseInt(e.target.value)));
+$("#started").onclick=()=>setToday(1);
+lenSel.onchange=()=>{L=parseInt(lenSel.value);save("cycleLen",L);haptic();render();};
+$("#shuffle").onclick=()=>{shuffle++;haptic();renderMenu();};
+document.querySelectorAll(".seg").forEach(seg=>seg.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const k=seg.dataset.k, v=+b.dataset.v, cur=entry(TODAY)[k];
+  setEntry(TODAY,{[k]:cur===v?null:v});
+  if(k==="c") recomputeCoffee();
+  haptic("light");renderMyDay();
+}));
+
+function recomputeCoffee(){
+  let latest=null;
+  for(const mk in logs){const y=mk.slice(4,8),m=mk.slice(9,11);
+    for(const dd in logs[mk]) if(logs[mk][dd].c===1){const d=parse(y+"-"+m+"-"+String(dd).padStart(2,"0"));if(d<=TODAY&&(!latest||d>latest))latest=d;}}
+  const windowStart=new Date(TODAY.getFullYear(),TODAY.getMonth()-1,1);
+  if(latest) lastCoffee=latest; else if(!(lastCoffee&&lastCoffee<windowStart)) lastCoffee=null;
+  save("lastCoffee",lastCoffee?iso(lastCoffee):"");
+}
+
+/* ---------- render ---------- */
+function arcPath(a0,a1,r){const p=a=>[120+r*Math.sin(a),120-r*Math.cos(a)];const [x0,y0]=p(a0),[x1,y1]=p(a1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;}
+function list(a){return "<ul>"+a.map(x=>"<li>"+x+"</li>").join("")+"</ul>";}
+
+function render(){
+  const cd=cdAt(sel), ph=phaseOf(cd,L), p=P[ph.k];
+  document.documentElement.style.setProperty("--phase",`var(${p.color})`);
+  $("#day").value=todayCD(); lenSel.value=L;
+  $("#dialDay").textContent=cd; $("#dialOf").textContent="из "+L;
+  $("#dateTitle").textContent=fmt(TODAY,{day:"numeric",month:"long",weekday:"long"});
+  const g=$("#arcs");g.innerHTML=`<circle cx="120" cy="120" r="98" fill="none" stroke="var(--line)" stroke-width="14"/>`;
+  for(const [k,a,b] of ranges(L)){const a0=(a-1)/L*2*Math.PI+.02,a1=b/L*2*Math.PI-.02,on=k===ph.k;
+    g.insertAdjacentHTML("beforeend",`<path d="${arcPath(a0,a1,98)}" fill="none" stroke="var(${P[k].color})" stroke-width="${on?18:14}" stroke-linecap="round" opacity="${on?1:.45}"/>`);}
+  const m=$("#marker");m.style.transformOrigin="120px 120px";m.style.transform=`rotate(${((Math.min(cd,L)-.5)/L)*360}deg)`;
+
+  renderStrip();
+  // viewing banner
+  const vb=$("#viewing"), selDate=addDays(TODAY,sel);
+  if(sel){vb.hidden=false;vb.innerHTML=`<span>Смотришь <b>${fmt(selDate,{day:"numeric",month:"long",weekday:"long"})}</b> — день ${cd}, прогноз.</span><button class="btn small" id="back">Вернуться к сегодня</button>`;
+    $("#back").onclick=()=>{sel=0;haptic();render();};} else vb.hidden=true;
+
+  let late="";
+  if(!sel&&todayCD()>L) late=`<div class="alert"><b>День ${todayCD()} — цикл длиннее выбранных ${L} дней.</b> Если месячные начались, нажми «Начались месячные сегодня». Если цикл часто длиннее — поменяй длину. При задержке больше недели стоит сделать тест или показаться врачу.</div>`;
+  const rng=ph.late?`${ph.a}+ день`:`дни ${ph.a}–${ph.b}`;
+  const left=ph.late?0:ph.b-cd+1, nk=NEXT[ph.k];
+  $("#phaseBox").innerHTML=`<div class="lab">${p.season} · ${rng}</div><h2>${p.name}</h2><div class="sub">${p.sub}</div><div>${p.bio}</div>
+    <div class="today"><b>Фокус дня ${cd}.</b> ${todayFocus(ph.k,cd,ph.a)}</div>${late}
+    ${ph.late?"":`<div class="hint">${left===1?"Со следующего дня":"Через "+left+" "+plural(left,["день","дня","дней"])} — ${nk==="men"?"новый цикл":P[nk].name.toLowerCase()}.</div>`}`;
+
+  $("#myDay").hidden=!!sel;
+  if(!sel) renderMyDay();
+  renderMenu();
+  $("#grid").innerHTML=`
+    <div class="card"><h3>Работа</h3>${list(p.work)}</div>
+    <div class="card"><h3>Тренировки</h3>${list(p.sport)}<div class="me"><span>Для тебя:</span> ${p.sportMe}</div></div>
+    <div class="card wide"><h3>Продукты фазы</h3><div class="chips">${p.eat.map(x=>`<span class="chip">${x}</span>`).join("")}</div>
+      <div class="chips">${p.avoid.map(x=>`<span class="chip no">${x}</span>`).join("")}</div></div>
+    <div class="card"><h3>Голодание</h3><div>${p.fast}</div></div>
+    <div class="card"><h3>Добавки из гайда</h3>${list(p.supp)}<div class="hint">Перед приёмом — согласуй с врачом.</div></div>
+    <div class="card"><h3>Забота о себе</h3>${list(p.care)}</div>
+    <div class="card"><h3>Отношения и близость</h3><div>${p.love}</div></div>
+    <div class="card wide"><h3>Вопрос для дневника</h3><div style="font-size:16px">${p.journal[(cd-1)%p.journal.length]}</div><blockquote>«${p.mantra}»</blockquote></div>`;
+}
+
+function renderStrip(){
+  const s=$("#strip");s.innerHTML="";
+  const lateNow=todayCD()>L;
+  for(let i=0;i<14;i++){
+    const d=addDays(TODAY,i), cd=cdAt(i), k=phaseOf(cd,L).k;
+    let tag="";
+    if(lateNow) tag=i===0?"сейчас":"";
+    else if(cd===1) tag="●";
+    else if(k==="ovu") tag="пик";
+    const b=document.createElement("button");
+    b.setAttribute("aria-pressed",i===sel);b.setAttribute("aria-label",fmt(d,{day:"numeric",month:"long"})+", день "+cd+", "+P[k].name);
+    b.innerHTML=`<span class="wd">${i===0?"сег":fmt(d,{weekday:"short"})}</span><span class="dt">${d.getDate()}</span><span class="bar" style="background:var(${P[k].color})"></span><span class="cd">${cd}</span><span class="tag">${tag}</span>`;
+    b.onclick=()=>{sel=i;shuffle=0;haptic();render();if(i)$("#viewing").scrollIntoView({behavior:"smooth",block:"start"});};
+    s.appendChild(b);
+  }
+  // key dates
+  const K=$("#keys"), items=[];
+  if(lateNow){items.push([0,"men","Месячные","ожидаются в любой день"]);}
+  else{
+    const found={};
+    for(let i=0;i<=L+2;i++){
+      const cd=cdAt(i),k=phaseOf(cd,L).k,prevK=i?phaseOf(cdAt(i-1),L).k:null;
+      if(k==="ovu"&&!found.ovu&&(prevK!=="ovu"||i===0)){let j=i;while(phaseOf(cdAt(j+1),L).k==="ovu")j++;found.ovu=[i,j];}
+      if(k==="lut2"&&!found.lut2&&(prevK!=="lut2"||i===0)) found.lut2=i;
+      if(i>0&&cd===1&&!found.men) found.men=i;
+    }
+    const r=(a,b)=>a===b?fmt(addDays(TODAY,a)):fmt(addDays(TODAY,a))+" – "+fmt(addDays(TODAY,b));
+    if(found.ovu) items.push([found.ovu[0],"ovu",r(...found.ovu),"пик энергии — ставь переговоры, презентации, сложные 1:1"]);
+    if(found.lut2!==undefined) items.push([found.lut2,"lut2",(found.lut2===0?"сейчас":"с "+fmt(addDays(TODAY,found.lut2))),"зона ПМС — меньше встреч, без важных решений"]);
+    if(found.men) items.push([found.men,"men","≈ "+fmt(addDays(TODAY,found.men)),"месячные — запланируй отдых"]);
+    items.sort((a,b)=>a[0]-b[0]);
+  }
+  K.innerHTML=items.map(([_,k,d,t])=>`<li><i style="background:var(${P[k].color})"></i><b>${d}</b><span>${t}</span></li>`).join("");
+}
+
+function renderMyDay(){
+  const cd=todayCD(), ph=phaseOf(cd,L), items=checklist(ph.k,cd,ph.a), e=entry(TODAY), done=new Set(e.k||[]);
+  $("#checks").innerHTML=items.map((t,i)=>`<label class="chk"><input type="checkbox" id="chk${i}" data-i="${i}" ${done.has(i)?"checked":""}><span>${t}</span></label>`).join("");
+  const n=items.filter((_,i)=>done.has(i)).length;
+  $("#chkCount").textContent=n+" из "+items.length;
+  $("#prog").style.width=(n/items.length*100)+"%";
+  $("#checks").querySelectorAll("input").forEach(inp=>inp.onchange=()=>{
+    const s=new Set(entry(TODAY).k||[]);const i=+inp.dataset.i;inp.checked?s.add(i):s.delete(i);
+    setEntry(TODAY,{k:[...s].sort((a,b)=>a-b)});haptic(inp.checked?"light":null);
+    if(inp.checked&&s.size===items.length){try{tg&&tg.HapticFeedback&&tg.HapticFeedback.notificationOccurred("success");}catch(_){}}
+    renderMyDay();
+  });
+  document.querySelectorAll(".seg").forEach(seg=>{const v=e[seg.dataset.k];seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",v===+b.dataset.v));});
+  // coffee
+  let nc, ctext;
+  if(lastCoffee&&diff(TODAY,lastCoffee)===0){nc="0";ctext="Сегодня был кофе. Завтра — новый отсчёт.";}
+  else{const from=lastCoffee?addDays(lastCoffee,1):trackSince;const n=diff(TODAY,from)+1;nc=n+" "+plural(n,["день","дня","дней"]);ctext="без кофе — с "+fmt(from,{day:"numeric",month:"long"});}
+  $("#coffeeBig").textContent=nc;$("#coffeeTxt").textContent=ctext;
+  // sweets
+  let sw=0,known=0;for(let i=0;i<14;i++){const x=entry(addDays(TODAY,-i));if(x.s===1)sw++;if(x.s===0||x.s===1)known++;}
+  $("#sweetBig").textContent=sw+" из 14";
+  $("#sweetTxt").textContent=ph.k==="lut2"?"дней со сладким. В этой фазе тяга сильнее всего — выручит тёмный шоколад.":"дней со сладким за две недели";
+  // history
+  let h=`<span></span>`, ph2="<span></span>", c="<span>кофе</span>", s="<span>сладк.</span>";
+  for(let i=13;i>=0;i--){const d=addDays(TODAY,-i),x=entry(d),k=phaseOf(cdAt(-i),L).k;
+    h+=`<span class="d">${d.getDate()}</span>`;ph2+=`<span class="ph" style="background:var(${P[k].color})"></span>`;
+    c+=`<span class="dot${x.c===1?" on":""}" title="${x.c===1?"кофе":x.c===0?"без кофе":"нет отметки"}"></span>`;
+    s+=`<span class="dot sw${x.s===1?" on":""}" title="${x.s===1?"сладкое":x.s===0?"без сладкого":"нет отметки"}"></span>`;}
+  $("#hist").innerHTML=h+ph2+c+s;
+}
+
+function renderMenu(){
+  const cd=cdAt(sel), k=phaseOf(cd,L).k, M=MENU[k], o=cd+shuffle;
+  const pick=(a,n)=>a[(o+n)%a.length];
+  $("#meals").innerHTML=[["Завтрак",pick(M.b,0)],["Обед",pick(M.l,1)],["Ужин",pick(M.d,2)],["Перекус",pick(M.s,0)]]
+    .map(([t,v])=>`<div class="meal"><div class="lab">${t}</div><div>${v}</div></div>`).join("");
+  $("#menuNote").textContent=M.note;
+}
+
 function applyTheme(){
   if(!tg||!tg.colorScheme) return;
   document.documentElement.setAttribute("data-theme",tg.colorScheme);
   const bg=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
   try{tg.setHeaderColor(bg);tg.setBackgroundColor(bg);}catch(e){}
 }
-function haptic(){try{tg&&tg.HapticFeedback&&tg.HapticFeedback.selectionChanged();}catch(e){}}
 
-let L=28, day=1;
-lenSel.value=L;
-
-function setDay(d,save=true){
-  haptic();
-  day=Math.max(1,Math.min(60,d|0||1));
-  if(save){const s=midnight(new Date());s.setDate(s.getDate()-(day-1));store.set("cycleStart",iso(s));}
-  render();
-}
-$("#minus").onclick=()=>setDay(day-1);
-$("#plus").onclick=()=>setDay(day+1);
-$("#day").addEventListener("change",e=>setDay(parseInt(e.target.value)));
-$("#started").onclick=()=>setDay(1);
-lenSel.onchange=()=>{haptic();L=parseInt(lenSel.value);store.set("cycleLen",L);render();};
-
-function arcPath(a0,a1,r){
-  const p=a=>[120+r*Math.sin(a),120-r*Math.cos(a)];
-  const [x0,y0]=p(a0),[x1,y1]=p(a1);
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
-}
-function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
-function list(a){return "<ul>"+a.map(x=>"<li>"+x+"</li>").join("")+"</ul>";}
-
-function render(){
-  const total=Math.max(L,day);
-  const ph=phaseOf(day,L), p=P[ph.k];
-  document.documentElement.style.setProperty("--phase",`var(${p.color})`);
-  $("#day").value=day;
-  $("#dialDay").textContent=day;
-  $("#dialOf").textContent="из "+L;
-  const now=new Date();
-  $("#dateTitle").textContent=now.toLocaleDateString("ru-RU",{day:"numeric",month:"long",weekday:"long"});
-
-  // dial
-  const g=$("#arcs"); g.innerHTML="";
-  const gap=0.04;
-  g.insertAdjacentHTML("beforeend",`<circle cx="120" cy="120" r="98" fill="none" stroke="var(--line)" stroke-width="14"/>`);
-  for(const [k,a,b] of ranges(L)){
-    const a0=(a-1)/L*2*Math.PI+gap/2, a1=b/L*2*Math.PI-gap/2;
-    const on=k===ph.k;
-    g.insertAdjacentHTML("beforeend",`<path d="${arcPath(a0,a1,98)}" fill="none" stroke="var(${P[k].color})" stroke-width="${on?18:14}" stroke-linecap="round" opacity="${on?1:.45}"/>`);
-  }
-  const ang=((Math.min(day,L)-0.5)/L)*360;
-  $("#marker").style.transform=`rotate(${ang}deg)`;
-  $("#marker").style.transformOrigin="120px 120px";
-  $("#marker circle").setAttribute("cy","22");
-
-  // phase box
-  let late="";
-  if(day>L){
-    late=`<div class="alert"><b>День ${day} — цикл длиннее выбранных ${L} дней.</b> Если месячные начались, нажми «Начались месячные сегодня». Если цикл часто длиннее — поменяй длину цикла. При задержке больше недели стоит сделать тест или показаться врачу.</div>`;
-  }
-  const rng=ph.late?`${ph.a}+ день`:`дни ${ph.a}–${ph.b}`;
-  const nextK={men:"fol",fol:"ovu",ovu:"lut1",lut1:"lut2",lut2:"men"}[ph.k];
-  const left=ph.late?0:ph.b-day+1;
-  const nextTxt=nextK==="men"?"новый цикл":P[nextK].name.toLowerCase();
-  $("#phaseBox").innerHTML=`
-    <div class="lab">${p.season} · ${rng}</div>
-    <h2>${p.name}</h2>
-    <div class="sub">${p.sub}</div>
-    <div>${p.bio}</div>
-    <div class="today"><b>Фокус дня ${day}.</b> ${todayFocus(ph.k,day,ph.a,ph.b,L)}</div>
-    ${late}
-    <div class="hint">${ph.late?"":(left===1?"Завтра":"Через "+left+" "+plural(left,["день","дня","дней"]))} — ${nextTxt}.</div>`;
-
-  $("#grid").innerHTML=`
-    <div class="card"><h3>Работа</h3>${list(p.work)}</div>
-    <div class="card"><h3>Тренировки</h3>${list(p.sport)}<div class="me"><span>Для тебя:</span> ${p.sportMe}</div></div>
-    <div class="card wide"><h3>Питание</h3>
-      <div class="chips">${p.eat.map(x=>`<span class="chip">${x}</span>`).join("")}</div>
-      <div class="chips">${p.avoid.map(x=>`<span class="chip no">${x}</span>`).join("")}</div>
-      <div class="hint">${p.eatNote}</div></div>
-    <div class="card"><h3>Голодание</h3><div>${p.fast}</div></div>
-    <div class="card"><h3>Добавки из гайда</h3>${list(p.supp)}<div class="hint">Перед приёмом — согласуй с врачом.</div></div>
-    <div class="card"><h3>Забота о себе</h3>${list(p.care)}</div>
-    <div class="card"><h3>Отношения и близость</h3><div>${p.love}</div></div>
-    <div class="card wide"><h3>Вопрос для дневника</h3><div style="font-size:16px">${p.journal[(day-1)%p.journal.length]}</div><blockquote>«${p.mantra}»</blockquote></div>`;
-
-  $("#legend").innerHTML=ranges(L).map(([k,a,b])=>`<span><i style="background:var(${P[k].color})"></i>${P[k].name} · ${a}–${b}</span>`).join("");
-}
-function plural(n,f){const a=n%100,b=n%10;if(a>10&&a<20)return f[2];if(b>1&&b<5)return f[1];if(b===1)return f[0];return f[2];}
 render();
-if(tg){tg.ready();tg.expand();applyTheme();tg.onEvent("themeChanged",()=>{applyTheme();render();});}
-loadAll(v=>{
-  L=parseInt(v.cycleLen)||28; lenSel.value=L;
-  if(v.cycleStart){const st=midnight(new Date(v.cycleStart+"T00:00:00"));day=Math.max(1,Math.round((midnight(new Date())-st)/864e5)+1);}
+if(tg){try{tg.ready();tg.expand();}catch(e){}applyTheme();tg.onEvent&&tg.onEvent("themeChanged",()=>{applyTheme();render();});}
+const prevMonth=new Date(TODAY.getFullYear(),TODAY.getMonth()-1,1);
+const keys=["cycleStart","cycleLen","lastCoffee","trackSince",monthKey(TODAY),monthKey(prevMonth)];
+loadKeys(keys,v=>{
+  L=parseInt(v.cycleLen)||28;
+  if(v.cycleStart) start=parse(v.cycleStart);
+  if(v.trackSince) trackSince=parse(v.trackSince); else save("trackSince",iso(TODAY));
+  if(v.lastCoffee) lastCoffee=parse(v.lastCoffee);
+  [monthKey(TODAY),monthKey(prevMonth)].forEach(mk=>{try{if(v[mk])logs[mk]=JSON.parse(v[mk]);}catch(e){}});
   render();
 });
 </script>
